@@ -36,6 +36,6 @@ O projeto e um protótipo de gerenciamento de rolos de correias transportadoras 
  <br/><br/>
 #### Montagem fisica do projeto
   <br/><br/>
-![](https://github.com/Lthaistsu/RfidEsp32/blob/main/assets/IMG_3996.jpg)
+![](https://github.com/thaistsu/RfidEsp32/blob/main/assets/IMG_3996.jpg)
   <br/><br/>
   
