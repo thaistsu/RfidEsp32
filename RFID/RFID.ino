@@ -4,17 +4,14 @@
 #include <MFRC522.h>//biblioteca responsável pela comunicação com o módulo RFID-RC522
 #include <SPI.h> //biblioteca para comunicação do barramento SPI
 
-#define ID "09 F7 30 31"
-
-#define SS_PIN 14
-#define RST_PIN 27
+#define SS_PIN 14 //Pino SS do modulo RFID
+#define RST_PIN 27 //Pino Reset do modulo RFID
 
 
 
-
-// Definicoes pino modulo RC522
-MFRC522 mfrc522(SS_PIN, RST_PIN); 
+MFRC522 mfrc522(SS_PIN, RST_PIN); //Instancia da MRC522
 Adafruit_SSD1306 display(128, 64, &Wire, -1);
+
 
 void ConfiguraDisplay(){
   if(!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) { 
@@ -22,7 +19,7 @@ void ConfiguraDisplay(){
     for(;;);
   }
   display.clearDisplay(); 
-  SplashScreen();
+  telaInicial();
   //Define o tamanho da fonte de texto utilizada para escrever no display
   display.setTextSize(1);
   display.setTextColor(WHITE);
@@ -30,54 +27,77 @@ void ConfiguraDisplay(){
  }
 
 
-void SplashScreen(){
-  
+void telaInicial(){
   display.clearDisplay();
   display.setTextSize(1);
   display.setTextColor(WHITE);
   
   //Desenha um circulo, nas coodenadas cartesianas x=48 e y=6, e com raio 6
   display.fillCircle(48, 6, 6, WHITE);
-
   display.fillRoundRect(42,15,  12,12,  2, WHITE);
   display.fillRoundRect(42,29,  12,12,  2, WHITE);
   display.fillRoundRect(42,43,  12,12,  2, WHITE);
-
   display.fillRoundRect(57,1,  12,12,  2, WHITE);
   display.fillRoundRect(57,15,  12,12,  2, WHITE);
   display.fillRoundRect(57,29,  12,12,  2, WHITE);
   display.fillRoundRect(57,43,  12,12,  2, WHITE);
-
   display.fillRoundRect(72,1,  12,12,  2, WHITE);
   display.fillRoundRect(72,15,  12,12,  2, WHITE);
 
   //Posiciona o cursor na posição x=30 e y=57
-  display.setCursor(30, 57);
-  //Escreve o texto na clculadora iniciando da posição do cursor
-  display.println("RFID");
+  display.setCursor(5, 57);
+  //Escreve o texto na posição do cursor
+  display.println("APROXIME A ETIQUETA");
 
   //Aplica todas as alteraçoes no display
   display.display();
-  
-  }
+}
 
+//Se o produto for reconhecido imprime seus dados
+void ProdutoReconhecido(String conteudo){
 
-void ApresentarNoDisplay(String conteudo, int fonte){
   display.clearDisplay();
-  display.setTextSize(fonte);
+  display.setTextSize(1);
+  
   display.setCursor(0, 10);
+  display.println("FAB: GENERAL MOTORS");
+
+  conteudo.toUpperCase();
+  display.setCursor(0, 20);
+  display.print("N. SERIE:");
   display.println(conteudo);
+
+  display.setCursor(0, 30);
+  display.println("SETOR: ENGENHARIA");
+
+  display.setCursor(0, 40);
+  display.println("ULT.MANUT:03/11/2020");
+
+  display.setCursor(0, 50);
+  display.println("PROX.MANUT:03/05/2021");
   display.display();
   }
 
+//Caso o produto não seja reconhecido apresenta item não cadastrado no display
+void ProdutoNaoReconhecido(String conteudo){
+  display.clearDisplay();
+  display.setTextSize(1);
+  
+  display.setCursor(0, 10);
+  display.println("ITEM NAO CADASTRADO");
+
+  conteudo.toUpperCase();
+  display.setCursor(0, 20);
+  display.print("N. SERIE:");
+  display.println(conteudo);
+  display.display();
+  }
+  
 void setup() {
   Serial.begin(115200);
   ConfiguraDisplay();
   SPI.begin();
   mfrc522.PCD_Init(); 
-  // Mensagens iniciais no serial monitor
-  Serial.println("RFID + ESP32");
-  Serial.println("Aguardando tag RFID para verificar o id da mesma.");
 }
 
 void loop() {
@@ -93,12 +113,15 @@ void loop() {
   Serial.print("id da tag :"); //imprime na serial o id do cartao
  
   for (byte i = 0; i < mfrc522.uid.size; i++){       // faz uma verificacao dos bits da memoria do cartao
-     //ambos comandos abaixo vão concatenar as informacoes do cartao...
-     //porem os 2 primeiros irao mostrar na serial e os 2 ultimos guardarao os valores na string de conteudo para fazer as verificacoes
-     Serial.print(mfrc522.uid.uidByte[i] < 0x10 ? " 0" : " ");
-     Serial.print(mfrc522.uid.uidByte[i], HEX);
+     //concatena as informacoes do cartao...
+     //E guarda os valores na string de conteudo para fazer as verificacoes
      conteudo.concat(String(mfrc522.uid.uidByte[i] < 0x10 ? " 0" : " "));
      conteudo.concat(String(mfrc522.uid.uidByte[i], HEX));
   }
+  if (conteudo.substring(1) == "ca e0 a2 16"){
+    ProdutoReconhecido(conteudo);
+    }else{
+      ProdutoNaoReconhecido(conteudo);
+      }
   delay(500);
 }
